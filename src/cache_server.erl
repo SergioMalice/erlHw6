@@ -46,8 +46,9 @@ lookup_by_date(TName, DateFrom, DateTo) ->
   gen_server:call(?MODULE, {lookup_by_date, TName, DateFrom, DateTo}).
 
 handle_call({lookup, TName, Key}, _From, State) ->
-  Reply = [{ok, Val} || #cache{value = Val} <- ets:lookup(TName, Key)],
-  {reply, Reply, State}; % выбираем все поля с указанным ключем, возвращаем только значения
+  List = ets:lookup(TName, Key),
+  Now = calendar:datetime_to_gregorian_seconds(calendar:universal_time()),
+  {reply, [{ok, El#cache.value} || El <- List, El#cache.life > Now], State};
 handle_call({lookup_by_date, TName, DateFrom, DateTo}, _From, State) ->
   FromTime = calendar:datetime_to_gregorian_seconds(DateFrom),
   ToTime = calendar:datetime_to_gregorian_seconds(DateTo),
